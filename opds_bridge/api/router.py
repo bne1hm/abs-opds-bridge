@@ -1,6 +1,5 @@
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, Query, Response
-from fastapi.responses import Response as FastAPIResponse
 from lxml import etree
 
 from opds_bridge.config import get_settings
@@ -11,7 +10,7 @@ from opds_bridge.opds.builders import make_book_entry, add_pagination_links
 
 router = APIRouter()
 
-@router.get("/opds", response_class=FastAPIResponse, summary="Root OPDS catalog")
+@router.get("/opds", response_class=Response, summary="Root OPDS catalog")
 def opds_root(_=Depends(basic_auth_guard), settings=Depends(get_settings)):
     libs = [l for l in abs.list_libraries() if l.get("mediaType") == "book"]
     feed = atom_root("Audiobookshelf OPDS", "/opds", kind="navigation")
@@ -33,7 +32,7 @@ def opds_root(_=Depends(basic_auth_guard), settings=Depends(get_settings)):
         }
     )
 
-@router.get("/opds/library/{lib_id}", response_class=FastAPIResponse,
+@router.get("/opds/library/{lib_id}", response_class=Response,
             summary="Books in library (ebooks only)")
 def opds_library(lib_id: str,
                  page: int = Query(1, ge=1),
@@ -60,7 +59,7 @@ def opds_library(lib_id: str,
     xml = etree.tostring(feed, xml_declaration=True, encoding="UTF-8")
     return Response(content=xml, media_type="application/atom+xml;profile=opds-catalog;kind=acquisition")
 
-@router.get("/opds/search.xml", response_class=FastAPIResponse,
+@router.get("/opds/search.xml", response_class=Response,
             summary="OpenSearch description document")
 def opensearch_description(_=Depends(basic_auth_guard)):
     """OpenSearch description for OPDS search"""
@@ -86,7 +85,7 @@ def opensearch_description(_=Depends(basic_auth_guard)):
         }
     )
 
-@router.get("/opds/search", response_class=FastAPIResponse,
+@router.get("/opds/search", response_class=Response,
             summary="Search across all libraries")
 def opds_search(q: str = Query("", description="Search query"),
                 _=Depends(basic_auth_guard),

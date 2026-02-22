@@ -11,11 +11,11 @@ router = APIRouter()
 @router.get("/acquire/{item_id}")
 @router.get("/acquire/{item_id}/{slug}")
 def acquire(item_id: str,
+            request: Request,
             slug: str | None = None,
-            request: Request = None,
             _=Depends(basic_auth_guard)):
     headers = {}
-    rng = request.headers.get("range") if request else None
+    rng = request.headers.get("range")
     if rng:
         headers["Range"] = rng
 

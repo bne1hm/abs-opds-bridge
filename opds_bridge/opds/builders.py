@@ -52,10 +52,6 @@ def make_book_entry(feed, item: Dict, abs_base: str):
         etree.SubElement(a, "name").text = aobj.get("name") or str(aobj)
 
     cover = (media.get("cover") or {}).get("contentUrl") or media.get("coverPath")
-    if not cover:
-        cover_path = media.get("coverPath")
-        if cover_path:
-            cover = cover_path
     if cover:
         base = abs_base.rstrip("/")
         link_img = etree.SubElement(entry, "link")
@@ -67,8 +63,6 @@ def make_book_entry(feed, item: Dict, abs_base: str):
         link_th.set("href", base + cover)
         link_th.set("type", "image/jpeg")
 
-    ebook = media.get("ebookFile") or {}
-    m = (ebook.get("metadata") or {})
     ext = _ext_from_item(item)
     filename = _safe_filename(title) + f".{ext}"
     slug = quote(filename)
