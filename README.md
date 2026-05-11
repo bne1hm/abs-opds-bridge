@@ -8,6 +8,11 @@ OPDS bridge for [Audiobookshelf](https://www.audiobookshelf.org/), allowing you 
 - Book search via OpenSearch
 - Basic Auth and token-based authentication
 
+## Tested With
+
+- [FBReader](https://fbreader.org/)
+- [Moon+ Reader](https://moondownload.com/)
+
 ## Requirements
 
 - Python 3.13+
