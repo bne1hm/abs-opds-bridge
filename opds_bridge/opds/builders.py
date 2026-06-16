@@ -29,7 +29,7 @@ def _ext_from_item(item: dict) -> str:
     meta = ebook.get("metadata") or {}
     ext = (meta.get("ext") or "").lstrip(".").lower()
     if not ext:
-        fmt = (ebook.get("ebookFormat") or "").lower()
+        fmt = (ebook.get("ebookFormat") or media.get("ebookFormat") or "").lower()
         ext = {"epub":"epub","pdf":"pdf","mobi":"mobi","azw3":"azw3","cbz":"cbz","cbr":"cbr"}.get(fmt, "")
     return ext or "bin"
 

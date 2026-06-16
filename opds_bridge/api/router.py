@@ -44,16 +44,11 @@ def opds_library(lib_id: str,
     has_next = len(raw_items) == limit
 
     for it in raw_items:
-        item_id = it.get("id")
-        if not item_id:
+        if not it.get("id"):
             continue
-        detail = it
-        media = (detail.get("media") or {})
-        if not media.get("ebookFile"):
-            detail = abs.item_details(item_id)
-            media = (detail.get("media") or {})
+        media = (it.get("media") or {})
         if media.get("ebookFile") or media.get("ebookFormat"):
-            make_book_entry(feed, detail, str(settings.ABS_BASE))
+            make_book_entry(feed, it, str(settings.ABS_BASE))
 
     add_pagination_links(feed, f"/opds/library/{lib_id}", page, limit, has_next)
     xml = etree.tostring(feed, xml_declaration=True, encoding="UTF-8")
