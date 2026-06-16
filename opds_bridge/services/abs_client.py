@@ -40,7 +40,7 @@ def get_json(path: str, params: Optional[dict] = None, cache_ttl: Optional[int] 
 def stream_download(item_id: str, headers: Optional[dict] = None):
     base = str(_settings.ABS_BASE).rstrip("/")
     token = _settings.ABS_TOKEN or ""
-    url = f"{base}/api/items/{item_id}/download?token={token}"
+    url = f"{base}/api/items/{item_id}/ebook?token={token}"
     try:
         r = _session().get(url, headers=headers or {}, stream=True, timeout=120)
     except requests.RequestException as e:
