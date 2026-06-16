@@ -1,29 +1,41 @@
-import base64
-from fastapi import HTTPException, Request, Depends
-from opds_bridge.config import get_settings
+import secrets
+from typing import Annotated, Optional
 
-def basic_auth_guard(request: Request, settings=Depends(get_settings)):
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+from opds_bridge.config import Settings, get_settings
+
+_security_scheme = HTTPBasic(realm="OPDS", auto_error=False)
+
+
+def basic_auth_guard(
+    credentials: Annotated[Optional[HTTPBasicCredentials], Depends(_security_scheme)],
+    settings: Settings = Depends(get_settings),
+):
     user = settings.OPDS_BASIC_USER
     pw = settings.OPDS_BASIC_PASS
+
     if not user and not pw:
         return
 
-    auth = request.headers.get("authorization", "")
-    if not auth.lower().startswith("basic "):
-        raise HTTPException(
-            status_code=401,
-            detail="Auth required",
-            headers={"WWW-Authenticate": 'Basic realm="OPDS"'},
-        )
-    try:
-        decoded = base64.b64decode(auth.split(" ", 1)[1]).decode("utf-8")
-        got_user, got_pw = decoded.split(":", 1)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Malformed Authorization")
+    challenge = {"WWW-Authenticate": 'Basic realm="OPDS"'}
 
-    if got_user != user or got_pw != pw:
+    if credentials is None:
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Auth required",
+            headers=challenge,
+        )
+
+    expected_user = (user or "").encode("utf-8")
+    expected_pw = (pw or "").encode("utf-8")
+    user_ok = secrets.compare_digest(credentials.username.encode("utf-8"), expected_user)
+    pw_ok = secrets.compare_digest(credentials.password.encode("utf-8"), expected_pw)
+
+    if not (user_ok and pw_ok):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
-            headers={"WWW-Authenticate": 'Basic realm="OPDS"'},
+            headers=challenge,
         )
