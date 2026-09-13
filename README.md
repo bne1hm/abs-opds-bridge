@@ -5,13 +5,15 @@ OPDS bridge for [Audiobookshelf](https://www.audiobookshelf.org/), allowing you 
 ## Features
 
 - Full OPDS protocol support
-- Book search via OpenSearch
+- Book search via OpenSearch (FBReader, KOReader) and Atom template fallback (Moon+ Reader)
+- Browse or search by author and by genre
 - Basic Auth and token-based authentication
 
 ## Tested With
 
 - [FBReader](https://fbreader.org/)
 - [Moon+ Reader](https://moondownload.com/)
+- [KOReader](https://koreader.rocks/)
 
 ## Requirements
 
@@ -74,6 +76,8 @@ docker run -d -p 8000:8000 \
 | `ABS_TOKEN` | Audiobookshelf API token | Yes | - |
 | `OPDS_BASIC_USER` | Username for Basic Auth | No | - |
 | `OPDS_BASIC_PASS` | Password for Basic Auth | No | - |
+| `CACHE_TTL_DEFAULT` | TTL (seconds) for ABS API response cache | No | `30` |
+| `INDEX_TTL` | TTL (seconds) for the author/genre catalog index; first request after expiry rescans all libraries (can take a few seconds) | No | `600` |
 
 ## License
 

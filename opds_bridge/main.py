@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from opds_bridge.api.router import router as opds_router
+from opds_bridge.api.search import router as search_router
 from opds_bridge.api.acquire import router as acquire_router
 
 def create_app() -> FastAPI:
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
         return await call_next(request)
 
     app.include_router(opds_router)
+    app.include_router(search_router)
     app.include_router(acquire_router)
     return app
 

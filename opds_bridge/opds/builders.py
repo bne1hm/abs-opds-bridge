@@ -1,8 +1,9 @@
 import re
 import datetime as dt
-from urllib.parse import quote
+from typing import Dict, Mapping, Optional
+from urllib.parse import quote, urlencode
 from lxml import etree
-from typing import Dict
+from opds_bridge.opds.atom import feed_type
 
 MIME_BY_EXT = {
     "epub": "application/epub+zip",
@@ -78,17 +79,21 @@ def make_book_entry(feed, item: Dict, abs_base: str):
 
     return entry
 
-def add_pagination_links(feed, base_path: str, page: int, limit: int, has_next: bool):
+def add_pagination_links(feed, base_path: str, page: int, limit: int, has_next: bool,
+                         kind: str = "acquisition",
+                         params: Optional[Mapping[str, str]] = None):
     """
-    Add <link rel="next"> and <link rel="previous"> if applicable.
-    We can't know 'has_next' without a total count; simple heuristic: if page is non-empty, assume next is possible and let client follow.
-    You can derive exact 'has_next' if your ABS build returns 'total'.
+    Add <link rel="next"> and <link rel="previous"> if applicable,
+    preserving extra query params (e.g. search terms, facet names).
     """
     def link(rel, p):
+        query = dict(params or {})
+        query["page"] = p
+        query["limit"] = limit
         l = etree.SubElement(feed, "link")
         l.set("rel", rel)
-        l.set("href", f"{base_path}?page={p}&limit={limit}")
-        l.set("type", "application/atom+xml;profile=opds-catalog;kind=acquisition")
+        l.set("href", f"{base_path}?{urlencode(query)}")
+        l.set("type", feed_type(kind))
     if page > 1:
         link("previous", page - 1)
     if has_next:

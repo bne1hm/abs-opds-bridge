@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     OPDS_BASIC_PASS: str | None = None
 
     CACHE_TTL_DEFAULT: int = 30
+    INDEX_TTL: int = 600
 
     model_config = SettingsConfigDict(
         env_file=".env",

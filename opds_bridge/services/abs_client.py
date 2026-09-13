@@ -82,8 +82,56 @@ def fetch_page_items(lib_id: str, page: int, limit: int) -> list[dict]:
     data = get_json(base, params={"limit": limit, "collapseseries": 0})
     return _extract_list(data)
 
-def item_details(item_id: str) -> dict:
-    return get_json(f"/api/items/{item_id}")
+_MAX_INDEX_PAGES = 50
+
+def fetch_all_items(lib_id: str, limit: int = 2000) -> list[dict]:
+    """Fetch every item of a library, preferring one big page.
+
+    Falls back to offset pagination when the server caps the page size.
+    Raises 502 instead of returning a silently truncated list, so the
+    catalog index is never built from partial data.
+    """
+    items: list[dict] = []
+    seen_ids: set[str] = set()
+    raw_seen = 0
+    offset = 0
+    total: Optional[int] = None
+    for _ in range(_MAX_INDEX_PAGES):
+        data = get_json(
+            f"/api/libraries/{lib_id}/items",
+            params={"limit": limit, "offset": offset, "collapseseries": 0},
+            cache_ttl=_settings.INDEX_TTL,
+        )
+        if total is None and data.get("total") is not None:
+            total = int(data["total"])
+        page = _extract_list(data)
+        if not page:
+            break
+        raw_seen += len(page)
+        new = [it for it in page if it.get("id") and it["id"] not in seen_ids]
+        items.extend(new)
+        seen_ids.update(it["id"] for it in new)
+        if total is not None and raw_seen >= total:
+            break
+        if not new:
+            raise HTTPException(
+                status_code=502,
+                detail=f"ABS pagination is stuck for library {lib_id} "
+                       f"(got {raw_seen} of {total} items)",
+            )
+        offset += len(page)
+    else:
+        raise HTTPException(
+            status_code=502,
+            detail=f"ABS library {lib_id} did not return all items "
+                   f"within {_MAX_INDEX_PAGES} pages",
+        )
+    if total is not None and raw_seen < total:
+        raise HTTPException(
+            status_code=502,
+            detail=f"ABS library {lib_id} returned {raw_seen} of {total} items",
+        )
+    return items
 
 def search_items(lib_id: str, q: str) -> list[dict]:
     data = get_json(f"/api/libraries/{lib_id}/search", params={"q": q})
